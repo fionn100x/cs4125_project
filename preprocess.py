@@ -1,6 +1,7 @@
 #Methods related to data loading and all pre-processing steps will go here
 import pandas as pd
 import numpy as np
+import re
 from Config import Config
 
 def get_input_data():
@@ -15,4 +16,13 @@ def get_input_data():
 def de_duplication(df):
     df = df.drop_duplicates(subset=[Config.TICKET_SUMMARY, Config.INTERACTION_CONTENT])
     return df
+
+def noise_remover(text: str) -> str:
+    # Example of removing non-alphanumeric characters
+    clean_text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    return clean_text
+
+def translate_to_en(text_list):
+    # Simulate translation by assuming text is already in English
+    return text_list
 

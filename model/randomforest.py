@@ -1,3 +1,7 @@
+# This file is not used anymore as the code has been moved to
+# classification_strategy.py and modelling.py
+
+
 import numpy as np
 import pandas as pd
 from model.base import BaseModel
