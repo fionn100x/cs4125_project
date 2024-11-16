@@ -4,6 +4,7 @@ from embeddings import *
 from modelling.modelling import *
 from modelling.data_model import *
 import random
+from model.observer import Subject, ResultDisplayer, StatisticsLogger
 seed =0
 random.seed(seed)
 np.random.seed(seed)
@@ -30,10 +31,14 @@ def get_embeddings(df:pd.DataFrame):
 def get_data_object(X: np.ndarray, df: pd.DataFrame):
     return Data(X, df)
 
-def perform_modelling(data: Data, df: pd.DataFrame, name):
-    model_predict(data, df, name)
+def perform_modelling(data: Data, df: pd.DataFrame, name, subject):
+    model_predict(data, df, name, subject)
 # Code will start executing from following line
 if __name__ == '__main__':
+    # Initialize subject and observers
+    subject = Subject()
+    subject.register_observer(ResultDisplayer())
+    subject.register_observer(StatisticsLogger())
     
     # pre-processing steps
     df = load_data()
@@ -46,5 +51,5 @@ if __name__ == '__main__':
     # data modelling
     data = get_data_object(X, df)
     # modelling
-    perform_modelling(data, df, 'name')
+    perform_modelling(data, df, 'name', subject)
 
