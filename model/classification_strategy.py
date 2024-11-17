@@ -60,6 +60,29 @@ class HistGradientBoostingStrategy(ClassificationStrategy):
         self.model.attach(hist_logger)  # Attach the observer to the model
         self.model.data_transform()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class SGDStrategy(ClassificationStrategy):
     def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         from .sgd_classifier import SGDClassifier

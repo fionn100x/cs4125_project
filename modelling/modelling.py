@@ -14,6 +14,12 @@ def model_predict(data, df, name: str):
         'adaboost': AdaBoostStrategy(),
         'randomforest': RandomForestStrategy(),
         'histgb': HistGradientBoostingStrategy(),
+
+
+
+
+
+        
         'sgd': SGDStrategy()
     }
 
