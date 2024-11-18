@@ -1,4 +1,4 @@
-#This is a main file: The controller. All methods will directly on directly be called here
+# This is a main file: The controller. All methods will directly or indirectly be called here
 import os
 import joblib
 import numpy as np
@@ -9,29 +9,28 @@ from modelling.data_model import *
 import random
 from config_manager import ConfigurationManager
 from model.randomforest import RandomForest
-from command import Command, ClassifyEmailCommand, MarkAsSpamCommand
 
-seed =0
+
+seed = 0
 random.seed(seed)
 np.random.seed(seed)
 
-
 def load_data():
-    #load the input data
+    # Load the input data
     df = get_input_data()
-    return  df
+    return df
 
 def preprocess_data(df):
     # De-duplicate input data
-    df =  de_duplication(df)
-    # remove noise in input data
+    df = de_duplication(df)
+    # Remove noise in input data
     df = noise_remover(df)
-    # translate data to english
+    # Translate data to English
     df[Config.TICKET_SUMMARY] = translate_to_en(df[Config.TICKET_SUMMARY].tolist())
     return df
 
-def get_embeddings(df:pd.DataFrame):
-    X = get_tfidf_embd(df)  # get tf-idf embeddings
+def get_embeddings(df: pd.DataFrame):
+    X = get_tfidf_embd(df)  # Get TF-IDF embeddings
     return X, df
 
 def get_data_object(X: np.ndarray, df: pd.DataFrame):
@@ -78,35 +77,22 @@ class ClassifierManager:
         except FileNotFoundError:
             print("No pre-trained RandomForest model found. Please train the model first.")
 
-
-# Code will start executing from following line
+# Code will start executing from the following line
 if __name__ == '__main__':
     
-    # pre-processing steps
+    # Pre-processing steps
     df = load_data()
     if not df.empty:
         df = preprocess_data(df)
         df[Config.INTERACTION_CONTENT] = df[Config.INTERACTION_CONTENT].values.astype('U')
         df[Config.TICKET_SUMMARY] = df[Config.TICKET_SUMMARY].values.astype('U')
     
-    # data transformation
-    X, group_df = get_embeddings(df)
-    # data modelling
-    data = get_data_object(X, df)
-    classifier_manager = ClassifierManager()
+        # Data transformation
+        X, group_df = get_embeddings(df)
+        # Data modeling
+        data = get_data_object(X, df)
+        classifier_manager = ClassifierManager()
         classifier_manager.train_random_forest_model(data)
         
-        # Create and execute commands based on user or system actions
-        commands = [
-            ClassifyEmailCommand(classifier_manager, data),
-            MarkAsSpamCommand(data)
-        ]
-
-        for command in commands:
-            command.execute()
-    else:
-        print("No data loaded. Please check your file path and data integrity.")
-
-    # modelling
+    # Modeling
     perform_modelling(data, df, 'name')
-
