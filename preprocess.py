@@ -7,4 +7,4 @@ def noise_remover(df):
     return df
 
 def translate_to_en(texts):
-    return texts  # Stub for translation logic (use a library or API in production)
+    return texts  # Stub for translation logic 
