@@ -1,16 +1,39 @@
-from model.randomforest import RandomForest
-from model.hist_gb import HistGradientBoosting
-from observerPattern.logging_observer import LoggingObserver
-def model_predict(data, df, name):
-    #comment out based on what model you want to run (this is where we used classification design pattern
-    model = RandomForest(name, data.get_embeddings(), data.get_type())
-    #model = HistGradientBoosting(name, data.get_embeddings(), data.get_type())
-    #adding observer to model subject
-    logger = LoggingObserver()
-    model.attach(logger)
-    model.train(data)
-    model.predict(data.get_X_test())
-    model_evaluate(model, data)
+# modelling.py
+from model.classification_strategy import (
+    AdaBoostStrategy,
+    RandomForestStrategy,
+    HistGradientBoostingStrategy,
+    ClassifierContext
+)
+from model.email import Email
+from sklearn.metrics import classification_report
 
-def model_evaluate(model, data):
-    model.print_results(data)
+def model_predict(data, df, name: str):
+    strategies = {
+        'adaboost': AdaBoostStrategy(),
+        'randomforest': RandomForestStrategy(),
+        'histgb': HistGradientBoostingStrategy()
+    }
+
+    strategy = strategies.get(name.lower())
+    if not strategy:
+        raise ValueError(f"Unknown model: {name}. Available models: {list(strategies.keys())}")
+
+    classifier = ClassifierContext(strategy)
+
+    # Initialize and train the model
+    classifier.train_classifier(data.get_X_train(), data.get_type_y_train(), data.vectorizer)
+
+    # Create email objects from test data
+    predictions = []
+    for _, row in data.df_test.iterrows():
+        content = row['Interaction content']
+        summary = row['Ticket Summary']
+        email = Email(content=str(content), summary=str(summary))
+        pred = classifier.classify_email(email)
+        predictions.append(pred[0])  # Get the prediction from the array
+
+    # Print results
+    strategy.model.print_results(data)
+
+    return predictions

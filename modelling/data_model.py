@@ -4,19 +4,24 @@ import pandas as pd
 
 
 class Data:
-    def __init__(self, X: np.ndarray, df: pd.DataFrame) -> None:
-        # Perform train-test split
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            X, df['y2'].values, test_size=0.2, random_state=0, stratify=df['y2']
+    def __init__(self, X: np.ndarray, vectorizer, df: pd.DataFrame) -> None:
+        self.vectorizer = vectorizer
+        self.df = df  # Store the entire DataFrame
+
+        # Perform train-test split and keep indices
+        train_indices, test_indices = train_test_split(
+            df.index, test_size=0.2, random_state=0, stratify=df['y2']
         )
 
-        # Get train-test indices using DataFrame index
-        train_mask = np.isin(X, self.X_train, assume_unique=False)
-        test_mask = ~train_mask
+        # Split features and labels
+        self.X_train = X[train_indices]
+        self.X_test = X[test_indices]
+        self.y_train = df.loc[train_indices, 'y2'].values
+        self.y_test = df.loc[test_indices, 'y2'].values
 
-        self.train_df = df.iloc[train_mask]
-        self.test_df = df.iloc[test_mask]
-        self.embeddings = X
+        # Split raw text data
+        self.df_train = df.loc[train_indices]
+        self.df_test = df.loc[test_indices]
 
     def get_type(self):
         return self.y_train

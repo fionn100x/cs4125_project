@@ -1,30 +1,40 @@
 import numpy as np
 from .base import BaseModel
+from .classification_strategy import HistGradientBoostingStrategy, ClassifierContext
+from observerPattern.model_subject import ModelSubject
+from .email import Email
+from sklearn.metrics import classification_report 
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.metrics import classification_report
 
-class HistGradientBoosting(BaseModel):
-    def __init__(self, model_name: str, embeddings: np.ndarray, y: np.ndarray) -> None:
+class HistGradientBoosting(BaseModel, ModelSubject):
+    def __init__(self, model_name: str, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         super().__init__()
+        ModelSubject.__init__(self)
         self.model_name = model_name
         self.embeddings = embeddings
         self.y = y
-        self.mdl = HistGradientBoostingClassifier(random_state=0)
+        self.vectorizer = vectorizer
+        self.model = HistGradientBoostingClassifier()
         self.predictions = None
-        self.data_transform()
 
-    def train(self, data) -> None:
-        """Train the Histogram-based Gradient Boosting model."""
-        self.mdl.fit(data.get_X_train(), data.get_type_y_train())
+    def train(self, X: np.ndarray, y: np.ndarray) -> None:
+        self.notify("HistGB Training Started")
+        self.model.fit(X, y)
+        self.notify("Training Completed")
 
-    def predict(self, X_test: np.ndarray):
-        """Predict labels for the given test data."""
-        self.predictions = self.mdl.predict(X_test)
+    def predict(self, content: str):
+        self.notify("HistGB Prediction Started")
+        email = Email(content=content, summary="")
+        features = email.to_features(self.vectorizer)
+        pred = self.model.predict([features])
+        self.notify("Prediction Completed")
+        return pred
 
-    def print_results(self, data) -> None:
-        """Print classification report."""
-        print(classification_report(data.get_type_y_test(), self.predictions))
+    def print_results(self, data):
+        self.notify("HistGB Evaluation Started")
+        predictions = self.model.predict(data.get_X_test())
+        print(classification_report(data.get_type_y_test(), predictions))
+        self.notify("HistGB Evaluation Completed")
 
     def data_transform(self) -> None:
-        """Prepare the data for training and prediction."""
         self.embeddings, self.labels = self.embeddings, self.y
