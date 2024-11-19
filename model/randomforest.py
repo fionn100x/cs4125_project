@@ -20,21 +20,21 @@ class RandomForest(BaseModel, ModelSubject):
     def train(self, X: np.ndarray, y: np.ndarray) -> None:
         self.notify("RandomForest Training Started")
         self.model.fit(X, y)
-        self.notify("Training Completed")
+        self.notify("RandomForest Training Completed")
 
     def predict(self, content: str):
-        self.notify("RandomForest Prediction Started")
+        self.notify("RandomForest Predicting Email")
         email = Email(content=content, summary="")
         features = email.to_features(self.vectorizer)
         pred = self.model.predict([features])
-        self.notify("Prediction Completed")
+        self.notify("RandomForest Email Predicted")
         return pred
 
     def print_results(self, data):
-        self.notify("RandomForest Evaluation Started")
+        self.notify("RandomForest Printing results")
         predictions = self.model.predict(data.get_X_test())
         print(classification_report(data.get_type_y_test(), predictions))
-        self.notify("RandomForest Evaluation Completed")
+        self.notify("RandomForest Results Printed")
 
     def data_transform(self) -> None:
         self.embeddings, self.labels = self.embeddings, self.y

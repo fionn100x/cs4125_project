@@ -23,18 +23,18 @@ class HistGradientBoosting(BaseModel, ModelSubject):
         self.notify("Training Completed")
 
     def predict(self, content: str):
-        self.notify("HistGB Prediction Started")
+        self.notify("HistGB Predicting Email")
         email = Email(content=content, summary="")
         features = email.to_features(self.vectorizer)
         pred = self.model.predict([features])
-        self.notify("Prediction Completed")
+        self.notify("HistGB Email Predicted")
         return pred
 
     def print_results(self, data):
-        self.notify("HistGB Evaluation Started")
+        self.notify("HistGB Printing Results")
         predictions = self.model.predict(data.get_X_test())
         print(classification_report(data.get_type_y_test(), predictions))
-        self.notify("HistGB Evaluation Completed")
+        self.notify("HistGB Results Printed")
 
     def data_transform(self) -> None:
         self.embeddings, self.labels = self.embeddings, self.y

@@ -20,21 +20,21 @@ class AdaBoosting(BaseModel, ModelSubject):
     def train(self, X: np.ndarray, y: np.ndarray) -> None:
         self.notify("AdaBoost Training Started")
         self.model.fit(X, y)
-        self.notify("Training Completed")
+        self.notify("AdaBoost Training Completed")
 
     def predict(self, content: str):
-        self.notify("AdaBoost Prediction Started")
+        self.notify("AdaBoost Predicting Email")
         email = Email(content=content, summary="")
         features = email.to_features(self.vectorizer)
         pred = self.model.predict([features])
-        self.notify("Prediction Completed")
+        self.notify("AdaBoost Email Predicted")
         return pred
 
     def print_results(self, data):
-        self.notify("AdaBoost Evaluation Started")
+        self.notify("AdaBoost Printing Results")
         predictions = self.model.predict(data.get_X_test())
         print(classification_report(data.get_type_y_test(), predictions))
-        self.notify("AdaBoost Evaluation Completed")
+        self.notify("AdaBoost Results Printed")
 
     def data_transform(self) -> None:
         self.embeddings, self.labels = self.embeddings, self.y

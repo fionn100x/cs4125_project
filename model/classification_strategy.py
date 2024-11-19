@@ -2,6 +2,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Any
+
+from observerPattern.logging_observer import LoggingObserver
 from .email import Email
 
 class ClassificationStrategy(ABC):
@@ -35,18 +37,27 @@ class AdaBoostStrategy(ClassificationStrategy):
     def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         from .adaboosting import AdaBoosting
         self.model = AdaBoosting(model_name="AdaBoost", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        # Initialize LoggingObserver and attach it to the model
+        ada_logger = LoggingObserver(observer_name="AdaBoostLoggingObserver")
+        self.model.attach(ada_logger)  # Attach the observer to the model
         self.model.data_transform()
 
 class RandomForestStrategy(ClassificationStrategy):
     def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         from .randomforest import RandomForest
         self.model = RandomForest(model_name="RandomForest", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        # Initialize LoggingObserver and attach it to the model
+        rf_logger = LoggingObserver(observer_name="RandomForestLoggingObserver")
+        self.model.attach(rf_logger)  # Attach the observer to the model
         self.model.data_transform()
 
 class HistGradientBoostingStrategy(ClassificationStrategy):
     def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         from .hist_gb import HistGradientBoosting
         self.model = HistGradientBoosting(model_name="HistGradientBoosting", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        # Initialize LoggingObserver and attach it to the model
+        hist_logger = LoggingObserver(observer_name="HistGBLoggingObserver")
+        self.model.attach(hist_logger)  # Attach the observer to the model
         self.model.data_transform()
 
 class ClassifierContext:
