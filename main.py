@@ -10,16 +10,24 @@ from modelling.data_model import *
 import random
 from config_manager import ConfigurationManager
 from model.randomforest import RandomForest
-from preprocess import get_input_data
 
-# Set the seed for reproducibility
+
+
 seed = 0
 random.seed(seed)
 np.random.seed(seed)
 
+def get_input_data():
+    """Loads and combines input data from CSV files."""
+    purchasing_df = pd.read_csv('data/Purchasing.csv')
+    app_gallery_df = pd.read_csv('data/AppGallery.csv')
+    df = pd.concat([purchasing_df, app_gallery_df], ignore_index=True)
+    return df
+
+
 def load_data():
     # Load the input data
-    df = get_input_data()  # Replace with specific data loading method if needed
+    df = get_input_data()  
     return df
 
 def preprocess_data(df):
