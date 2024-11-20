@@ -1,7 +1,7 @@
+# data_model.py
 from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
-
 
 class Data:
     def __init__(self, X: np.ndarray, vectorizer, df: pd.DataFrame) -> None:
@@ -39,10 +39,10 @@ class Data:
         return self.y_test
 
     def get_train_df(self):
-        return self.train_df
+        return self.df_train
+
+    def get_test_df(self):
+        return self.df_test
 
     def get_embeddings(self):
         return self.embeddings
-
-    def get_type_test_df(self):
-        return self.test_df
