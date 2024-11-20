@@ -1,31 +1,39 @@
-from model.randomforest import RandomForest
+# modelling.py
 from model.classification_strategy import (
-    ClassifierContext, 
+    AdaBoostStrategy,
     RandomForestStrategy,
-    AdaBoostStrategy
+    HistGradientBoostingStrategy,
+    ClassifierContext
 )
+from model.email import Email
+from sklearn.metrics import classification_report
 
-def model_predict(data, df, name):
-    # Initialize strategies
+def model_predict(data, df, name: str):
     strategies = {
+        'adaboost': AdaBoostStrategy(),
         'randomforest': RandomForestStrategy(),
-        'adaboost': AdaBoostStrategy()
+        'histgb': HistGradientBoostingStrategy()
     }
-    
-    # Select strategy based on name
-    strategy = strategies.get(name.lower(), RandomForestStrategy())
+
+    strategy = strategies.get(name.lower())
+    if not strategy:
+        raise ValueError(f"Unknown model: {name}. Available models: {list(strategies.keys())}")
+
     classifier = ClassifierContext(strategy)
-    
-    # Train
-    classifier.train_classifier(data.X_train, data.y_train)
-    
-    # Predict
-    predictions = classifier.classify(data.X_test)
-    
+
+    # Initialize and train the model
+    classifier.train_classifier(data.get_X_train(), data.get_type_y_train(), data.vectorizer)
+
+    # Create email objects from test data
+    predictions = []
+    for _, row in data.df_test.iterrows():
+        content = row['Interaction content']
+        summary = row['Ticket Summary']
+        email = Email(content=str(content), summary=str(summary))
+        pred = classifier.classify_email(email)
+        predictions.append(pred[0])  # Get the prediction from the array
+
     # Print results
-    from sklearn.metrics import classification_report
-    print(classification_report(data.y_test, predictions))
+    strategy.model.print_results(data)
 
-
-def model_evaluate(model, data):
-    model.print_results(data)
+    return predictions

@@ -1,66 +1,45 @@
-#This is a main file: The controller. All methods will directly on directly be called here
-from turtle import pd
-
-import np
-
-from model.email import Email
+from modelling.modelling import model_predict
 from preprocess import *
 from embeddings import *
-from modelling.modelling import *
+from modelling import *
 from modelling.data_model import *
-from model.base_classifier import BaseClassifier
-from classifier_decorator import NoiseRemovalDecorator, TranslationDecorator
-from model.sgd_classifier import SGDClassifier
-
 import random
-seed =0
+import numpy as np
+
+
+seed = 0
 random.seed(seed)
 np.random.seed(seed)
 
-
 def load_data():
-    #load the input data
-    df = get_input_data()
-    return  df
+    df = pd.read_csv("data/AppGallery.csv")  # Load dataset
+    return df
 
 def preprocess_data(df):
-    # De-duplicate input data
-    df =  de_duplication(df)
-    # remove noise in input data
-    base_classifier = SGDClassifier()
-    classifier_with_decorators = NoiseRemovalDecorator(TranslationDecorator(base_classifier))  # Chain decorators
+    df = de_duplication(df)
     df = noise_remover(df)
-    # translate data to english
-    df[Config.TICKET_SUMMARY] = translate_to_en(df[Config.TICKET_SUMMARY].tolist())
-    return df, classifier_with_decorators
+    df['Ticket Summary'] = translate_to_en(df['Ticket Summary'].tolist())
+    df['y2'] = df['Type 2']
+    return df
 
-def get_embeddings(df:pd.DataFrame):
-    X = get_tfidf_embd(df)  # get tf-idf embeddings
-    return X, df
-
-def get_data_object(X: np.ndarray, df: pd.DataFrame):
-    return Data(X, df)
-
-def perform_modelling(data: Data, df: pd.DataFrame, classifier, name):
-    classifier.train(data.X_train, data.y_train)
-    for index, row in df.iterrows():
-        email = Email(content=row[Config.INTERACTION_CONTENT], summary=row[Config.TICKET_SUMMARY])
-        prediction = classifier.classify(email)  # Classify the email using the classifier with applied decorators
-        print(f"Email {row[Config.TICKET_SUMMARY]} classified as: {prediction}")
+def perform_modelling(data, df, name):
     model_predict(data, df, name)
-# Code will start executing from following line
-if __name__ == '__main__':
-    
-    # pre-processing steps
-    df = load_data()
-    df, classifier = preprocess_data(df)
-    df[Config.INTERACTION_CONTENT] = df[Config.INTERACTION_CONTENT].values.astype('U')
-    df[Config.TICKET_SUMMARY] = df[Config.TICKET_SUMMARY].values.astype('U')
-    
-    # data transformation
-    X, group_df = get_embeddings(df)
-    # data modelling
-    data = get_data_object(X, df)
-    # modelling
-    perform_modelling(data, df, classifier, 'name')
 
+def get_embeddings(df):
+    X, vectorizer = get_tfidf_embd(df)
+    return X, vectorizer, df
+
+def get_data_object(X, vectorizer, df):
+    return Data(X, vectorizer, df)
+
+if __name__ == '__main__':
+    df = load_data()
+    df = preprocess_data(df)
+    df['Interaction content'] = df['Interaction content'].astype(str)
+    df['Ticket Summary'] = df['Ticket Summary'].astype(str)
+
+    model_name = input("Select model (randomforest/adaboost/histgb): ").lower()
+
+    X, vectorizer, group_df = get_embeddings(df)
+    data = get_data_object(X, vectorizer, df)
+    perform_modelling(data, df, model_name)

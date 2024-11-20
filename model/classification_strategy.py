@@ -1,59 +1,71 @@
+# classification_strategy.py
 from abc import ABC, abstractmethod
-import pandas as pd
 import numpy as np
+from typing import Any
+
+from observerPattern.logging_observer import LoggingObserver
 from .email import Email
 
 class ClassificationStrategy(ABC):
+    def __init__(self):
+        self._trained = False
+        self.model = None
+
+    def initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        if self.model is None:
+            self._initialize_model(embeddings, y, vectorizer)
+
     @abstractmethod
-    def classify(self, email: Email) -> str:
-        """
-        Classify the email using the specific strategy
-        """
+    def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         pass
 
-class RandomForestStrategy(ClassificationStrategy):
-    def __init__(self, n_estimators=1000, random_state=0):
-        from sklearn.ensemble import RandomForestClassifier
-        self.classifier = RandomForestClassifier(
-            n_estimators=n_estimators,
-            random_state=random_state,
-            class_weight='balanced_subsample'
-        )
-    
-    def train(self, X_train: np.ndarray, y_train: np.ndarray):
-        self.classifier.fit(X_train, y_train)
-    
-    def classify(self, email: Email) -> str:
-        features = email.to_features()
-        prediction = self.classifier.predict(features.reshape(1, -1))
-        return str(prediction[0])
+    def train_classifier(self, X: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        if self.model is None:
+            self.initialize_model(X, y, vectorizer)
+        self.model.train(X, y)
+        self._trained = True
+
+    def print_results(self, data):
+        self.model.print_results(data)
+
+    def classify_email(self, email: Email) -> Any:
+        if not self._trained:
+            raise ValueError("Model must be trained before classification")
+        return self.model.predict(email.content)
 
 class AdaBoostStrategy(ClassificationStrategy):
-    def __init__(self, n_estimators=50, random_state=0):
-        from sklearn.ensemble import AdaBoostClassifier
-        self.classifier = AdaBoostClassifier(
-            n_estimators=n_estimators,
-            random_state=random_state
-        )
-    
-    def train(self, X_train: np.ndarray, y_train: np.ndarray):
-        self.classifier.fit(X_train, y_train)
-    
-    def classify(self, email: Email) -> str:
-        features = email.to_features()
-        prediction = self.classifier.predict(features.reshape(1, -1))
-        return str(prediction[0])
+    def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        from .adaboosting import AdaBoosting
+        self.model = AdaBoosting(model_name="AdaBoost", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        # Initialize LoggingObserver and attach it to the model
+        ada_logger = LoggingObserver(observer_name="AdaBoostLoggingObserver")
+        self.model.attach(ada_logger)  # Attach the observer to the model
+        self.model.data_transform()
+
+class RandomForestStrategy(ClassificationStrategy):
+    def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        from .randomforest import RandomForest
+        self.model = RandomForest(model_name="RandomForest", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        # Initialize LoggingObserver and attach it to the model
+        rf_logger = LoggingObserver(observer_name="RandomForestLoggingObserver")
+        self.model.attach(rf_logger)  # Attach the observer to the model
+        self.model.data_transform()
+
+class HistGradientBoostingStrategy(ClassificationStrategy):
+    def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        from .hist_gb import HistGradientBoosting
+        self.model = HistGradientBoosting(model_name="HistGradientBoosting", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        # Initialize LoggingObserver and attach it to the model
+        hist_logger = LoggingObserver(observer_name="HistGBLoggingObserver")
+        self.model.attach(hist_logger)  # Attach the observer to the model
+        self.model.data_transform()
 
 class ClassifierContext:
     def __init__(self, strategy: ClassificationStrategy):
-        self._strategy = strategy
-    
-    def set_strategy(self, strategy: ClassificationStrategy):
-        self._strategy = strategy
-    
-    def train_classifier(self, X_train: np.ndarray, y_train: np.ndarray):
-        if hasattr(self._strategy, 'train'):
-            self._strategy.train(X_train, y_train)
-    
-    def classify_email(self, email: Email) -> str:
-        return self._strategy.classify(email)
+        self.strategy = strategy
+
+    def train_classifier(self, X: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        self.strategy.train_classifier(X, y, vectorizer)
+
+    def classify_email(self, email: Email) -> Any:
+        return self.strategy.classify_email(email)
