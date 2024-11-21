@@ -60,6 +60,14 @@ class HistGradientBoostingStrategy(ClassificationStrategy):
         self.model.attach(hist_logger)  # Attach the observer to the model
         self.model.data_transform()
 
+class SGDStrategy(ClassificationStrategy):
+    def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        from .sgd_classifier import SGDClassifier
+        self.model = SGDClassifier(loss="hinge", penalty="12", max_iter=1000, random_state=0)
+        sgd_logger = LoggingObserver(observer_name="SGDLoggingObserver")
+        self.model.attach(sgd_logger)
+        self.model.data_transform()
+
 class ClassifierContext:
     def __init__(self, strategy: ClassificationStrategy):
         self.strategy = strategy

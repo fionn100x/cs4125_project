@@ -3,6 +3,7 @@ from model.classification_strategy import (
     AdaBoostStrategy,
     RandomForestStrategy,
     HistGradientBoostingStrategy,
+    SGDStrategy,
     ClassifierContext
 )
 from model.email import Email
@@ -12,7 +13,8 @@ def model_predict(data, df, name: str):
     strategies = {
         'adaboost': AdaBoostStrategy(),
         'randomforest': RandomForestStrategy(),
-        'histgb': HistGradientBoostingStrategy()
+        'histgb': HistGradientBoostingStrategy(),
+        'sgd': SGDStrategy()
     }
 
     strategy = strategies.get(name.lower())

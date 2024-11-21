@@ -13,5 +13,7 @@ class SGDClassifier(BaseClassifier):
     def train(self, X_train: np.ndarray, y_train: np.ndarray):
         self.model.fit(X_train, y_train)
 
-    def predict(self, features: np.ndarray) -> int:
-        return self.model.predict(features.reshape(1, -1))[0]
+    def predict(self, content: str) -> int:
+        email = Email(content=content, summary="")
+        features = email.to_features(self.vectorizer)  # Use the same feature transformation
+        return self.model.predict([features])[0]

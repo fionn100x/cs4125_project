@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from email import Email
+from .email import Email
 
 class EmailClassifier(ABC):
     @abstractmethod
