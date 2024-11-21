@@ -65,7 +65,6 @@ class HistGradientBoostingStrategy(ClassificationStrategy):
         self.model.attach(hist_logger)
         self.model.data_transform()
 
-
 class VotingStrategy(ClassificationStrategy):
     def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         from .voting import VotingModel
@@ -75,8 +74,13 @@ class VotingStrategy(ClassificationStrategy):
         self.model.attach(voting_logger)
         self.model.data_transform()
 
-
-
+class SGDStrategy(ClassificationStrategy):
+    def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        from .sgd_classifier import SGDClassifier
+        self.model = SGDClassifier(model_name="SGDClassifier", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        sgd_logger = LoggingObserver(observer_name="SGDLoggingObserver")
+        self.model.attach(sgd_logger)
+        self.model.data_transform()
 
 class ClassifierContext:
     def __init__(self, strategy: ClassificationStrategy):

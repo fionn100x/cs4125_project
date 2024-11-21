@@ -1,5 +1,35 @@
-import threading
 import joblib
+import threading
+from main import ClassifierManager
+
+class ConfigurationManager:
+    _instance = None  # Private class attribute to hold the single instance
+    _lock = threading.Lock()  # Lock to ensure thread-safe initialization
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super(ConfigurationManager, cls).__new__(cls)
+                    cls._instance._initialize()
+        return cls._instance
+
+    def _initialize(self):
+        # Load the pre-trained RandomForest model if it exists
+        try:
+            self.model = joblib.load('models/random_forest_classifier.pkl')
+            print("RandomForest model loaded successfully in ConfigurationManager.")
+        except FileNotFoundError:
+            self.model = None
+            print("No pre-trained model found. Please train a model first.")
+
+    def classify_email(self, data):
+        if self.model:
+            predictions = self.model.predict(data.get_X_test())
+            data.test_df['Predicted Category'] = predictions
+            return data.test_df[['Ticket id', 'Predicted Category']]
+        else:
+            raise RuntimeError("No model available. Please train the model before classification.")
 
 
 class ModelManager:
@@ -28,6 +58,7 @@ class ModelManager:
             "randomforest": "models/random_forest_classifier.pkl",
             "adaboost": "models/adaboost_classifier.pkl",
             "histgb": "models/histgb_classifier.pkl",
+            "sgd": "models/sgd_classifier.pkl",
             "voting": "models/voting_classifier.pkl",
         }
         self._load_models()
@@ -73,7 +104,5 @@ class ModelManager:
         return data.test_df[["Ticket id", "Predicted Category"]]
 
 
-# Example Usage:
-# Access the Singleton instance
-#model_manager = ModelManager()
+
 

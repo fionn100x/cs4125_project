@@ -4,6 +4,7 @@ from model.classification_strategy import (
     AdaBoostStrategy,
     RandomForestStrategy,
     HistGradientBoostingStrategy,
+    SGDStrategy,
     VotingStrategy,
     ClassifierContext
 )
@@ -28,6 +29,7 @@ class ModellingManager:
                 'adaboost': AdaBoostStrategy(),
                 'randomforest': RandomForestStrategy(),
                 'histgb': HistGradientBoostingStrategy(),
+                'sgd':SGDStrategy(),
                 'voting': VotingStrategy()
             }
             ModellingManager._initialized = True
@@ -67,29 +69,31 @@ class ModellingManager:
 
 
 def model_predict(data, df, name: str):
-    # Get the singleton instance
-    modelling_manager = ModellingManager()
-    
-    try:
-        # Create classifier context
-        classifier = modelling_manager.create_classifier_context(name)
-        
-        # Train the model
-        classifier.train_classifier(
-            data.get_X_train(),
-            data.get_type_y_train()
-        )
-        
-        # Process test data and make predictions
-        emails = modelling_manager.process_test_data(data)
-        predictions = [classifier.classify_email(email) for email in emails]
-        
-        # Evaluate model
-        true_labels = data.get_type_y_test()
-        modelling_manager.evaluate_model(true_labels, predictions, name)
-        
-        return predictions
+    strategies = {
+        'adaboost': AdaBoostStrategy(),
+        'randomforest': RandomForestStrategy(),
+        'histgb': HistGradientBoostingStrategy()
+    }
 
-    except Exception as e:
-        print(f"Error during model prediction: {str(e)}")
-        raise
+    strategy = strategies.get(name.lower())
+    if not strategy:
+        raise ValueError(f"Unknown model: {name}. Available models: {list(strategies.keys())}")
+
+    classifier = ClassifierContext(strategy)
+
+    # Initialize and train the model
+    classifier.train_classifier(data.get_X_train(), data.get_type_y_train(), data.vectorizer)
+
+    # Create email objects from test data
+    predictions = []
+    for _, row in data.df_test.iterrows():
+        content = row['Interaction content']
+        summary = row['Ticket Summary']
+        email = Email(content=str(content), summary=str(summary))
+        pred = classifier.classify_email(email)
+        predictions.append(pred[0])  # Get the prediction from the array
+
+    # Print results
+    strategy.model.print_results(data)
+
+    return predictions
