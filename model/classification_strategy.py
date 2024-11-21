@@ -1,4 +1,3 @@
-# classification_strategy.py
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Any
@@ -54,42 +53,30 @@ class RandomForestStrategy(ClassificationStrategy):
 class HistGradientBoostingStrategy(ClassificationStrategy):
     def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         from .hist_gb import HistGradientBoosting
-        self.model = HistGradientBoosting(model_name="HistGradientBoosting", embeddings=embeddings, y=y, vectorizer=vectorizer)
-        # Initialize LoggingObserver and attach it to the model
+        self.model = HistGradientBoosting(
+            model_name="HistGradientBoosting",
+            embeddings=embeddings,
+            y=y,
+            vectorizer=vectorizer
+        )
+        # Attach a LoggingObserver for model notifications
+        from observerPattern.logging_observer import LoggingObserver
         hist_logger = LoggingObserver(observer_name="HistGBLoggingObserver")
-        self.model.attach(hist_logger)  # Attach the observer to the model
+        self.model.attach(hist_logger)
         self.model.data_transform()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class SGDStrategy(ClassificationStrategy):
+class VotingStrategy(ClassificationStrategy):
     def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
-        from .sgd_classifier import SGDClassifier
-        self.model = SGDClassifier(loss="hinge", penalty="12", max_iter=1000, random_state=0)
-        sgd_logger = LoggingObserver(observer_name="SGDLoggingObserver")
-        self.model.attach(sgd_logger)
+        from .voting import VotingModel
+        self.model = VotingModel(model_name="VotingModel", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        # Attach observer for logging
+        voting_logger = LoggingObserver(observer_name="VotingLoggingObserver")
+        self.model.attach(voting_logger)
         self.model.data_transform()
+
+
+
 
 class ClassifierContext:
     def __init__(self, strategy: ClassificationStrategy):
@@ -97,6 +84,9 @@ class ClassifierContext:
 
     def train_classifier(self, X: np.ndarray, y: np.ndarray, vectorizer) -> None:
         self.strategy.train_classifier(X, y, vectorizer)
+
+    def print_results(self, data):
+        self.strategy.print_results(data)
 
     def classify_email(self, email: Email) -> Any:
         return self.strategy.classify_email(email)
