@@ -4,9 +4,11 @@ from model.classification_strategy import (
     AdaBoostStrategy,
     RandomForestStrategy,
     HistGradientBoostingStrategy,
+    VotingStrategy,
     ClassifierContext
 )
 from model.email import Email
+
 
 class ModellingManager:
     """
@@ -25,7 +27,8 @@ class ModellingManager:
             self._strategies: Dict[str, Any] = {
                 'adaboost': AdaBoostStrategy(),
                 'randomforest': RandomForestStrategy(),
-                'histgb': HistGradientBoostingStrategy()
+                'histgb': HistGradientBoostingStrategy(),
+                'voting': VotingStrategy()
             }
             ModellingManager._initialized = True
 
@@ -62,6 +65,7 @@ class ModellingManager:
         print("-" * 50)
         print(classification_report(true_labels, predictions))
 
+
 def model_predict(data, df, name: str):
     # Get the singleton instance
     modelling_manager = ModellingManager()
@@ -73,23 +77,19 @@ def model_predict(data, df, name: str):
         # Train the model
         classifier.train_classifier(
             data.get_X_train(),
-            data.get_type_y_train(),
-            data.vectorizer
+            data.get_type_y_train()
         )
         
         # Process test data and make predictions
         emails = modelling_manager.process_test_data(data)
-        predictions = [classifier.classify_email(email)[0] for email in emails]
-        
-        # Print results
-        classifier.strategy.print_results(data)
+        predictions = [classifier.classify_email(email) for email in emails]
         
         # Evaluate model
         true_labels = data.get_type_y_test()
         modelling_manager.evaluate_model(true_labels, predictions, name)
         
         return predictions
-        
+
     except Exception as e:
         print(f"Error during model prediction: {str(e)}")
         raise

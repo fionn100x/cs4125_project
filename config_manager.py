@@ -1,102 +1,79 @@
-# config_manager.py
-import joblib
 import threading
-
-class ConfigurationManager:
-    _instance = None  # Private class attribute to hold the single instance
-    _lock = threading.Lock()  # Lock to ensure thread-safe initialization
-    
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(ClassifierManager, cls).__new__(cls)
-            cls._instance._initialize()
-        return cls._instance
-
-    def _initialize(self):
-        # Load the pre-trained RandomForest model if it exists
-        try:
-            self.model = joblib.load('models/random_forest_classifier.pkl')
-            print("RandomForest model loaded successfully in ClassifierManager.")
-        except FileNotFoundError:
-            self.model = None
-            print("No pre-trained model found. Please train a model first.")
-
-    def classify_email(self, data):
-        if self.model:
-            self.model.predict(data.get_X_test())
-            data.test_df['Predicted Category'] = self.model.predictions
-            return data.test_df[['Ticket id', 'Predicted Category']]
-        else:
-            raise RuntimeError("No model available. Please train the model before classification.")
+import joblib
 
 
+class ModelManager:
+    """
+    Singleton class for managing multiple machine learning models.
+    """
+    _instance = None
+    _lock = threading.Lock()  # Lock for thread safety
 
     def __new__(cls, *args, **kwargs):
         """
-        Overrides the __new__ method to ensure only one instance of ConfigurationManager is created.
-        Uses a lock to make it thread-safe.
+        Singleton instance creation with thread safety.
         """
         with cls._lock:
-            if not cls._instance:
-                cls._instance = super(ConfigurationManager, cls).__new__(cls)
-                cls._instance._initialize_settings()
+            if cls._instance is None:
+                cls._instance = super(ModelManager, cls).__new__(cls)
+                cls._instance._initialize()
         return cls._instance
 
-    def _initialize_settings(self):
+    def _initialize(self):
         """
-        Private method to set initial configuration values. 
-        This method runs only once when the singleton instance is created.
+        Initialize the model manager and load pre-trained models if they exist.
         """
-        self.database_path = "path/to/database.db"  # Path to the database
-        self.api_key = "your-api-key"  # API key for external services
-        self.email_categories = ["spam", "inbox", "promotion", "social"]  # Example categories
-        self.logging_enabled = True  # Configuration for logging
+        self.models = {}  # Dictionary to store model instances by name
+        self.model_files = {
+            "randomforest": "models/random_forest_classifier.pkl",
+            "adaboost": "models/adaboost_classifier.pkl",
+            "histgb": "models/histgb_classifier.pkl",
+            "voting": "models/voting_classifier.pkl",
+        }
+        self._load_models()
 
-    @staticmethod
-    def get_instance():
+    def _load_models(self):
         """
-        Static method to retrieve the single instance of ConfigurationManager.
-        Creates the instance if it doesn't already exist.
+        Load pre-trained models from disk into memory.
         """
-        if not ConfigurationManager._instance:
-            ConfigurationManager()  # Create the instance if it doesn't exist
-        return ConfigurationManager._instance
+        for model_name, model_file in self.model_files.items():
+            try:
+                self.models[model_name] = joblib.load(model_file)
+                print(f"Model '{model_name}' loaded successfully.")
+            except FileNotFoundError:
+                self.models[model_name] = None
+                print(f"No pre-trained model found for '{model_name}'. Please train it first.")
 
-    # Methods to access configuration settings
-    def get_database_path(self):
+    def get_model(self, model_name):
         """
-        Returns the path to the database.
+        Get the model instance for the given model name.
         """
-        return self.database_path
+        model = self.models.get(model_name)
+        if model is None:
+            raise RuntimeError(f"Model '{model_name}' is not available. Please train it first.")
+        return model
 
-    def get_api_key(self):
+    def save_model(self, model_name, model):
         """
-        Returns the API key for external services.
+        Save a trained model to disk.
         """
-        return self.api_key
+        if model_name not in self.model_files:
+            raise ValueError(f"Unknown model name '{model_name}'.")
+        joblib.dump(model, self.model_files[model_name])
+        self.models[model_name] = model
+        print(f"Model '{model_name}' saved successfully.")
 
-    def get_email_categories(self):
+    def classify(self, model_name, data):
         """
-        Returns the list of email categories.
+        Use the specified model to classify the given data.
         """
-        return self.email_categories
+        model = self.get_model(model_name)
+        predictions = model.predict(data.get_X_test())
+        data.test_df["Predicted Category"] = predictions
+        return data.test_df[["Ticket id", "Predicted Category"]]
 
-    def is_logging_enabled(self):
-        """
-        Returns whether logging is enabled.
-        """
-        return self.logging_enabled
 
-    # Example method to update configuration
-    def update_api_key(self, new_key):
-        """
-        Updates the API key with a new value.
-        """
-        self.api_key = new_key
+# Example Usage:
+# Access the Singleton instance
+#model_manager = ModelManager()
 
-    def toggle_logging(self):
-        """
-        Toggles the logging setting on or off.
-        """
-        self.logging_enabled = not self.logging_enabled

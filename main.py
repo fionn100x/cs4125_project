@@ -11,7 +11,8 @@ from model.classification_strategy import (
     ClassifierContext,
     RandomForestStrategy,
     AdaBoostStrategy,
-    HistGradientBoostingStrategy
+    HistGradientBoostingStrategy,
+    VotingStrategy  
 )
 
 # Set random seed for reproducibility
@@ -53,7 +54,7 @@ class ClassifierManager:
             data.get_type_y_train(),
             data.vectorizer
         )
-        print(f"Model trained successfully")
+       # print(f"Model trained successfully")
 
     def predict(self, data: Data):
         """Make predictions using the trained model."""
@@ -78,8 +79,8 @@ class ClassifierManager:
                                             self.classifier_context.strategy.__class__.__name__)
         
         print(f"Classification completed and results saved to '{result_path}'")
-        print("Here are the first few results:")
-        print(test_df[['Ticket id', 'Predicted Category']].head())
+        #print("Here are the first few results:")
+        #print(test_df[['Ticket id', 'Predicted Category']].head())
 
 def load_data():
     """Load the dataset."""
@@ -116,20 +117,16 @@ def perform_modelling(data: Data, df: pd.DataFrame, model_name: str):
 
 if __name__ == '__main__':
     try:
-        # Load and preprocess data
+   
         df = load_data()
         df = preprocess_data(df)
         df['Interaction content'] = df['Interaction content'].astype(str)
         df['Ticket Summary'] = df['Ticket Summary'].astype(str)
 
-        # Get available models from ModellingManager
-        modelling_manager = ModellingManager()
-        available_models = modelling_manager.get_available_models()
-        
-        # Get user input for model selection
+      
+        available_models = ['adaboost', 'randomforest', 'histgb', 'voting']
         model_name = input(f"Select model ({'/'.join(available_models)}): ").lower()
 
-        # Process data and perform modeling
         X, vectorizer, group_df = get_embeddings(df)
         data = get_data_object(X, vectorizer, df)
         perform_modelling(data, df, model_name)
