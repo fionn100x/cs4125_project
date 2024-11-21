@@ -4,7 +4,7 @@ from model.classification_strategy import (
     AdaBoostStrategy,
     RandomForestStrategy,
     HistGradientBoostingStrategy,
-    VotingStrategy,
+    SGDStrategy,
     VotingStrategy,
     ClassifierContext
 )
@@ -29,6 +29,7 @@ class ModellingManager:
                 'adaboost': AdaBoostStrategy(),
                 'randomforest': RandomForestStrategy(),
                 'histgb': HistGradientBoostingStrategy(),
+                'sgd':SGDStrategy(),
                 'voting': VotingStrategy()
             }
             ModellingManager._initialized = True
