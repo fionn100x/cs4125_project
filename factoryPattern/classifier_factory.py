@@ -14,10 +14,12 @@ class ClassifierFactory:
             return model.classification_strategy.SGDStrategy()
         elif strategy_type == "voting":
             return model.classification_strategy.VotingStrategy()
+        elif strategy_type == "logistic regression":
+            return model.classification_strategy.LogisticRegression()
         else:
             raise ValueError(f"Unknown classifier strategy: {strategy_type}")
 
     @staticmethod
     def get_supported_models():
         """Return a list of all supported classifier names."""
-        return ["randomforest", "adaboost", "histgb", "sgd", "voting"]
+        return ["randomforest", "adaboost", "histgb", "sgd", "voting", 'logistic regression']

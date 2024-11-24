@@ -158,7 +158,7 @@ if __name__ == '__main__':
         df['Interaction content'] = df['Interaction content'].astype(str)
         df['Ticket Summary'] = df['Ticket Summary'].astype(str)
 
-        available_models = ['adaboost', 'randomforest', 'histgb', 'voting', 'sgd']
+        available_models = ['adaboost', 'randomforest', 'histgb', 'voting', 'sgd', 'logistic regression']
         model_name = input(f"Select model ({'/'.join(available_models)}): ").lower()
 
         X, vectorizer, group_df = get_embeddings(df)

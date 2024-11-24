@@ -1,7 +1,7 @@
 from factoryPattern.classifier_factory import ClassifierFactory
 from typing import List
 from model.classification_strategy import ClassifierContext, AdaBoostStrategy, RandomForestStrategy, \
-    HistGradientBoostingStrategy, SGDStrategy, VotingStrategy
+    HistGradientBoostingStrategy, SGDStrategy, VotingStrategy, LogisticRegression
 from model.email import Email
 from sklearn.metrics import classification_report
 
@@ -51,7 +51,8 @@ def model_predict(data, df, name: str):
                 'randomforest': RandomForestStrategy(),
                 'histgb': HistGradientBoostingStrategy(),
                 'sgd':SGDStrategy(),
-                'voting': VotingStrategy()
+                'voting': VotingStrategy(),
+                'logistic regression': LogisticRegression()
     }
 
     strategy = strategies.get(name.lower())

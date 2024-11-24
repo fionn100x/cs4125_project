@@ -41,6 +41,15 @@ class AdaBoostStrategy(ClassificationStrategy):
         self.model.attach(ada_logger)  # Attach the observer to the model
         self.model.data_transform()
 
+class LogisticRegression(ClassificationStrategy):
+    def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
+        from .logistic_regression import LogisticRegressionModel
+        self.model = LogisticRegressionModel(model_name="LogisticRegression", embeddings=embeddings, y=y, vectorizer=vectorizer)
+        # Initialize LoggingObserver and attach it to the model
+        logistic_regression_logger = LoggingObserver(observer_name="LogisticRegressionObserver")
+        self.model.attach(logistic_regression_logger)  # Attach the observer to the model
+        self.model.data_transform()
+
 class RandomForestStrategy(ClassificationStrategy):
     def _initialize_model(self, embeddings: np.ndarray, y: np.ndarray, vectorizer) -> None:
         from .randomforest import RandomForest
