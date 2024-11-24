@@ -114,7 +114,7 @@ def preprocess_data(df):
     # Create and apply the preprocessing pipeline
     pipeline = PreprocessingPipeline(preprocessing_steps)
     processed_df = pipeline.process(df)
-    processed_df['y2'] = processed_df['Type 2']  # Add any additional required columns
+    processed_df['y2'] = processed_df['Type 2']
     return processed_df
 
 def get_embeddings(df):
