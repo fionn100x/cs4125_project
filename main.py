@@ -14,6 +14,10 @@ from model.classification_strategy import (
     HistGradientBoostingStrategy,
     VotingStrategy  
 )
+from commandPattern.command import Command
+from commandPattern.commands import SetStrategyCommand, TrainModelCommand, PredictCommand
+from commandPattern.classify_email_command import ClassifyEmailCommand
+from commandPattern.invoker import CommandInvoker
 
 # Set random seed for reproducibility
 seed = 0
@@ -54,7 +58,6 @@ class ClassifierManager:
             data.get_type_y_train(),
             data.vectorizer
         )
-       # print(f"Model trained successfully")
 
     def predict(self, data: Data):
         """Make predictions using the trained model."""
@@ -63,7 +66,14 @@ class ClassifierManager:
         
         # Use ModellingManager to process test data
         emails = self.modelling_manager.process_test_data(data)
-        predictions = [self.classifier_context.classify_email(email)[0] for email in emails]
+        predictions = []
+        invoker = CommandInvoker()
+
+        for email in emails:
+            command = ClassifyEmailCommand(self.classifier_context, email)
+            invoker.add_command(command)
+            invoker.execute_commands()
+            predictions.append(command.prediction[0])
         
         test_df = data.get_test_df()
         test_df['Predicted Category'] = predictions
@@ -108,28 +118,39 @@ def perform_modelling(data: Data, df: pd.DataFrame, model_name: str):
     """Perform the modeling process using the singleton ClassifierManager."""
     try:
         classifier_manager = ClassifierManager()
-        classifier_manager.set_strategy(model_name)
-        classifier_manager.train_model(data)
-        classifier_manager.predict(data)
+        invoker = CommandInvoker()
+
+        # Create and add commands to the invoker
+        set_strategy_command = SetStrategyCommand(classifier_manager, model_name)
+        train_model_command = TrainModelCommand(classifier_manager, data)
+        predict_command = PredictCommand(classifier_manager, data)
+
+        invoker.add_command(set_strategy_command)
+        invoker.add_command(train_model_command)
+        invoker.add_command(predict_command)
+
+        # Execute all commands
+        invoker.execute_commands()
+
+        # Get predictions and print results
+        predictions = classifier_manager.predict(data)
+        print("Predictions:", predictions)
     except Exception as e:
         print(f"Error during modeling: {str(e)}")
         raise
 
 if __name__ == '__main__':
     try:
-   
         df = load_data()
         df = preprocess_data(df)
         df['Interaction content'] = df['Interaction content'].astype(str)
         df['Ticket Summary'] = df['Ticket Summary'].astype(str)
 
-      
-        available_models = ['adaboost', 'randomforest', 'histgb', 'voting','sgd']
+        available_models = ['adaboost', 'randomforest', 'histgb', 'voting', 'sgd']
         model_name = input(f"Select model ({'/'.join(available_models)}): ").lower()
 
         X, vectorizer, group_df = get_embeddings(df)
         data = get_data_object(X, vectorizer, df)
         perform_modelling(data, df, model_name)
-        
     except Exception as e:
         print(f"An error occurred: {str(e)}")
