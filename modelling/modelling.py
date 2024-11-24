@@ -1,7 +1,7 @@
 from factoryPattern.classifier_factory import ClassifierFactory
 from typing import List
 from model.classification_strategy import ClassifierContext, AdaBoostStrategy, RandomForestStrategy, \
-    HistGradientBoostingStrategy
+    HistGradientBoostingStrategy, SGDStrategy, VotingStrategy
 from model.email import Email
 from sklearn.metrics import classification_report
 
@@ -47,9 +47,11 @@ class ModellingManager:
 
 def model_predict(data, df, name: str):
     strategies = {
-        'adaboost': AdaBoostStrategy(),
-        'randomforest': RandomForestStrategy(),
-        'histgb': HistGradientBoostingStrategy()
+                'adaboost': AdaBoostStrategy(),
+                'randomforest': RandomForestStrategy(),
+                'histgb': HistGradientBoostingStrategy(),
+                'sgd':SGDStrategy(),
+                'voting': VotingStrategy()
     }
 
     strategy = strategies.get(name.lower())
