@@ -1,15 +1,8 @@
-from typing import List, Dict, Any
-from sklearn.metrics import classification_report
-from model.classification_strategy import (
-    AdaBoostStrategy,
-    RandomForestStrategy,
-    HistGradientBoostingStrategy,
-    SGDStrategy,
-    VotingStrategy,
-    ClassifierContext
-)
+from factoryPattern.classifier_factory import ClassifierFactory
+from typing import List
+from model.classification_strategy import ClassifierContext
 from model.email import Email
-
+from sklearn.metrics import classification_report
 
 class ModellingManager:
     """
@@ -25,31 +18,15 @@ class ModellingManager:
 
     def __init__(self):
         if not ModellingManager._initialized:
-            self._strategies: Dict[str, Any] = {
-                'adaboost': AdaBoostStrategy(),
-                'randomforest': RandomForestStrategy(),
-                'histgb': HistGradientBoostingStrategy(),
-                'sgd':SGDStrategy(),
-                'voting': VotingStrategy()
-            }
             ModellingManager._initialized = True
 
     def get_available_models(self) -> List[str]:
-        """Returns list of available model names."""
-        return list(self._strategies.keys())
-
-    def get_strategy(self, name: str):
-        """Get the strategy for the specified model name."""
-        strategy = self._strategies.get(name.lower())
-        if not strategy:
-            raise ValueError(
-                f"Unknown model: {name}. Available models: {self.get_available_models()}"
-            )
-        return strategy
+        """Returns list of available model names from the factory."""
+        return ClassifierFactory.get_supported_models()
 
     def create_classifier_context(self, name: str) -> ClassifierContext:
-        """Create a classifier context with the specified strategy."""
-        strategy = self.get_strategy(name)
+        """Create a classifier context with the specified strategy using the factory."""
+        strategy = ClassifierFactory.create_classifier(name)  # Use the factory to create the strategy
         return ClassifierContext(strategy)
 
     def process_test_data(self, data) -> List[Email]:
@@ -66,34 +43,3 @@ class ModellingManager:
         print(f"\nModel Evaluation Results for {model_name}")
         print("-" * 50)
         print(classification_report(true_labels, predictions))
-
-
-def model_predict(data, df, name: str):
-    strategies = {
-        'adaboost': AdaBoostStrategy(),
-        'randomforest': RandomForestStrategy(),
-        'histgb': HistGradientBoostingStrategy()
-    }
-
-    strategy = strategies.get(name.lower())
-    if not strategy:
-        raise ValueError(f"Unknown model: {name}. Available models: {list(strategies.keys())}")
-
-    classifier = ClassifierContext(strategy)
-
-    # Initialize and train the model
-    classifier.train_classifier(data.get_X_train(), data.get_type_y_train(), data.vectorizer)
-
-    # Create email objects from test data
-    predictions = []
-    for _, row in data.df_test.iterrows():
-        content = row['Interaction content']
-        summary = row['Ticket Summary']
-        email = Email(content=str(content), summary=str(summary))
-        pred = classifier.classify_email(email)
-        predictions.append(pred[0])  # Get the prediction from the array
-
-    # Print results
-    strategy.model.print_results(data)
-
-    return predictions

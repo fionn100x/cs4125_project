@@ -2,6 +2,8 @@ import os
 import random
 import numpy as np
 import pandas as pd
+
+from factoryPattern.preprocessor_factory import PreprocessorFactory
 from preprocess import *
 from embeddings import *
 from modelling.data_model import Data
@@ -18,6 +20,7 @@ from commandPattern.command import Command
 from commandPattern.commands import SetStrategyCommand, TrainModelCommand, PredictCommand
 from commandPattern.classify_email_command import ClassifyEmailCommand
 from commandPattern.invoker import CommandInvoker
+from preprocessing_pipeline import PreprocessingPipeline
 
 # Set random seed for reproducibility
 seed = 0
@@ -100,12 +103,19 @@ def load_data():
     return df
 
 def preprocess_data(df):
-    """Preprocess the loaded data."""
-    df = de_duplication(df)
-    df = noise_remover(df)
-    df['Ticket Summary'] = translate_to_en(df['Ticket Summary'].tolist())
-    df['y2'] = df['Type 2']
-    return df
+    """Preprocess the loaded data dynamically using a pipeline."""
+    # Define the desired preprocessing steps
+    preprocessing_steps = [
+        PreprocessorFactory.create_preprocessor("deduplication"),
+        PreprocessorFactory.create_preprocessor("noise_removal"),
+        PreprocessorFactory.create_preprocessor("translation")
+    ]
+
+    # Create and apply the preprocessing pipeline
+    pipeline = PreprocessingPipeline(preprocessing_steps)
+    processed_df = pipeline.process(df)
+    processed_df['y2'] = processed_df['Type 2']  # Add any additional required columns
+    return processed_df
 
 def get_embeddings(df):
     """Get TF-IDF embeddings for the data."""
