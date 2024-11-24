@@ -9,7 +9,9 @@ class ClassifyEmailCommand(Command):
         self.prediction = None
 
     def execute(self) -> None:
+        print(f"Executing classification for email: {self.email.content}")
         self.prediction = self.classifier_context.classify_email(self.email)
+        print(f"Prediction: {self.prediction}")
 
     def undo(self) -> None:
         self.prediction = None

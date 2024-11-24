@@ -72,7 +72,10 @@ class ClassifierManager:
         for email in emails:
             command = ClassifyEmailCommand(self.classifier_context, email)
             invoker.add_command(command)
-            invoker.execute_commands()
+        
+        invoker.execute_commands()
+
+        for command in invoker._history:
             predictions.append(command.prediction[0])
         
         test_df = data.get_test_df()
@@ -89,8 +92,7 @@ class ClassifierManager:
                                             self.classifier_context.strategy.__class__.__name__)
         
         print(f"Classification completed and results saved to '{result_path}'")
-        #print("Here are the first few results:")
-        #print(test_df[['Ticket id', 'Predicted Category']].head())
+        return predictions
 
 def load_data():
     """Load the dataset."""
